@@ -7,11 +7,13 @@ Chopsticks
 #include <initializer_list>
 #include <conio.h>
 #include <vector>
+#include <cmath>
 using namespace std;
 
 //Colors to be used by my consol text
 string BRED = "\033[91m";
 string BGREEN = "\033[92m";
+string BPINK = "\033[95m";
 string BCYAN = "\033[96m";
 string BWHITE = "\033[97m";
 string BOLD = "\033[1m";
@@ -26,6 +28,7 @@ int numberOfHands = 2;
 //A struct holding all the data for a single player
 struct PlayerStruct {
     vector<int> hands;
+    string name = "";
 };
 
 //Number of players eleminated
@@ -35,6 +38,8 @@ int playersOut = 0;
 //Holds the players
 vector<PlayerStruct> players;
 
+//Holds nicknames before being added to the players
+vector<string> preNames;
 
 //Returns the hand value of a specific hand on a specific player
 int getHandValue(int player, int hand)
@@ -72,11 +77,20 @@ bool HasAliveHand(int playerNum)
 //Basic logic for a single persons turn
 int playPlayer(int playerNum)
 {
-    //Write the header text
+    //Clear the consol
     system("clear");
+    
+    //Write the header text
+    //If they don't have a name
     cout<<BCYAN<<"╔══════════════╗\n";
     cout<<"║   "<<BWHITE<<"Player "<<playerNum+1<<BCYAN<<"   ║\n";
     cout<<BCYAN<<"╚══════════════╝\n";
+    
+    //Say nicknames if they have one
+    if (players[playerNum].name != "")
+    {
+        cout<<BPINK<<BOLD<<"Nickname: "<<players[playerNum].name<<"\n"<<NORMAL;
+    }
     cout<<"\n";
     
     //Print out the data for each playing player
@@ -87,12 +101,23 @@ int playPlayer(int playerNum)
         {
             //Different header hand text if it is your hand
             currentColor = BGREEN;
-            cout<<BOLD<<currentColor<<"Your hand (p"<<i+1<<"): ◀─────\n";
+            cout<<BOLD<<currentColor;
+            
+            //Put the nickname before their hand
+            if (players[i].name != "")
+                cout<<players[i].name<<" | ";
+                
+            cout<<"Your hand (p"<<i+1<<"): ◀─────\n";
         }
         else
         {
             //Tells the player what player each hand corasponds too
             currentColor = BRED;
+            
+            //Put the nickname before their hand
+            if (players[i].name != "")
+                cout<<BOLD<<currentColor<<players[i].name<<" | ";
+                
             cout<<BOLD<<currentColor<<"Player "<<i+1<<"'s hand: \n";
         }
         
@@ -115,6 +140,7 @@ int playPlayer(int playerNum)
             cin>>attackHand>>defendingPlayer>>defendingHand;
         else
         {
+            //Auto sets defending player to the other player if only 2 players
             cin>>attackHand>>defendingHand;
             defendingPlayer = playerNum == 0 ? 2 : 1;
         }
@@ -141,6 +167,8 @@ int playPlayer(int playerNum)
             cout<<"Player "<<playerNum + 1<<" has won! Congragulations!\n";
             return -1;
         }
+        
+        //Wait until the continue
         cout<<"Press anything to continue ";
         string T;
         cin>>T;
@@ -202,7 +230,10 @@ void Menu()
         cout<<"5. Fingers on each hand: "<<fingersOnHand<<"\n";
         
         cout<<(curser == 6 ? "-> " : "   ");
-        cout<<"6. Start game"<<"\n";
+        cout<<"6. Set Player names"<<"\n";
+        
+        cout<<(curser == 7 ? "-> " : "   ");
+        cout<<"7. Start game"<<"\n";
         
         //Handles number inputs
         cin>>input;
@@ -218,11 +249,13 @@ void Menu()
             curser = 5;
         else if (input == "6")
             curser = 6;
+        else if (input == "7")
+            curser = 7;
         else if (input == "n" || input == "d" || input == "s") //Handles letter inputs for moving curser up and down
-            curser = curser + 1 == 7 ? 1 : curser + 1;
+            curser = curser + 1 == 8 ? 1 : curser + 1;
         else if (input == "p" || input == "u" || input == "w")
-            curser = curser - 1 == 0 ? 6 : curser - 1;
-        if (input == "o" || input == "1" || input == "2" || input == "3" || input == "4" || input == "5" || input == "6") //Dose the effect of a number if a number or o is pressed
+            curser = curser - 1 == 0 ? 7 : curser - 1;
+        if (input == "o" || input == "1" || input == "2" || input == "3" || input == "4" || input == "5" || input == "6" || input == "7") //Dose the effect of a number if a number or o is pressed
         {
             if (curser == 1)
                 inscrutions();
@@ -247,6 +280,16 @@ void Menu()
                 cin>>fingersOnHand;
             }
             else if (curser == 6)
+            {
+                for (int i = 0; i < numberOfPlayers; i++)
+                {
+                    cout<<BCYAN<<"Enter the name of player "<<i + 1<<": ";
+                    string name;
+                    cin>>name;
+                    preNames.push_back(name);
+                }
+            }
+            else if (curser == 7)
                 return;
         }
             
@@ -263,10 +306,15 @@ int main()
     
     //Add the hands to each player
     for (int j = 0; j < numberOfPlayers; j++)
-    for (int i = 0; i < numberOfHands; i++)
     {
-        players[j].hands.push_back(startingFingers);
-        //cout<<i<<" "<<players[i].hands;
+        if (j < preNames.size())
+            players[j].name = preNames[j];
+        
+        for (int i = 0; i < numberOfHands; i++)
+        {
+            players[j].hands.push_back(startingFingers);
+            //cout<<i<<" "<<players[i].hands;
+        }
     }
     //int T;
     //cin>>T;
