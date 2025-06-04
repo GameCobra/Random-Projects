@@ -17,13 +17,18 @@ string BWHITE = "\033[97m";
 string BOLD = "\033[1m";
 string NORMAL = "\033[0m";
 
-//A struct holding all the data for a single player
-struct PlayerStruct {
-    int hands[2] = {1, 1};
-};
-
 //Control Variables
 int numberOfPlayers = 2;
+int startingFingers = 1;
+int fingersOnHand = 5;
+int numberOfHands = 2;
+
+//A struct holding all the data for a single player
+struct PlayerStruct {
+    vector<int> hands;
+};
+
+int playersOut = 0;
 
 //Holds the players
 vector<PlayerStruct> players;
@@ -39,10 +44,22 @@ int getHandValue(int player, int hand)
 void attackPlayer(int attackPlayer, int attackHand, int defendPlayer, int defendHand)
 {
     //Calculated the new value of the inputed hand
-    int newValue = (getHandValue(attackPlayer, attackHand) + getHandValue(defendPlayer, defendHand)) % 5;
+    int newValue = (getHandValue(attackPlayer, attackHand) + getHandValue(defendPlayer, defendHand)) % fingersOnHand;
     
     //Sets that value to the hand
     players[defendPlayer].hands[defendHand] = newValue;
+}
+
+bool HasAliveHand(int playerNum)
+{
+    for (int i = 0; i < numberOfHands; i++)
+    {
+        if (getHandValue(playerNum, i) != 0)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 //Player num 0 - 1
@@ -73,24 +90,38 @@ int playPlayer(int playerNum)
         cout<<"\n";
     }
     
-    int attackHand, defendingHand;
+    int attackHand, defendingHand, defendingPlayer;
     while (true)
     {
         cout<<BWHITE<<"How will you attack: ";
-        cin>>attackHand>>defendingHand;
-        if (getHandValue(playerNum == 0 ? 1 : 0 , defendingHand - 1) == 0 || getHandValue(playerNum, attackHand - 1) == 0 )
+        if (numberOfPlayers != 2)
+            cin>>attackHand>>defendingPlayer>>defendingHand;
+        else
+        {
+            cin>>attackHand>>defendingHand;
+            defendingPlayer = playerNum == 0 ? 1 : 0;
+        }
+        
+        if (getHandValue(defendingPlayer - 1, defendingHand - 1) == 0 || getHandValue(playerNum, attackHand - 1) == 0 || defendingPlayer > numberOfPlayers)
             cout<<BRED<<"That is not a valade combination! Please try again\n"<<BWHITE;
         else
             break;
     }
 
-    attackPlayer(playerNum, attackHand - 1, playerNum == 0 ? 1 : 0, defendingHand - 1);
-    if (getHandValue(playerNum == 0 ? 1 : 0, 0) == 0 && getHandValue(playerNum == 0 ? 1 : 0, 1) == 0)
+    attackPlayer(playerNum, attackHand - 1, defendingPlayer - 1, defendingHand - 1);
+    if (getHandValue(defendingPlayer - 1, 0) == 0 && getHandValue(defendingPlayer - 1, 1) == 0)
     {
         system("clear");
-        cout<<BGREEN<<BOLD<<"Player "<<(playerNum == 0 ? 2 : 1)<<" has lost all fingers and has been eliminated!\n";
-        cout<<"Player "<<playerNum + 1<<" has won! Congragulations!\n";
-        return -1;
+        cout<<BGREEN<<BOLD<<"Player "<<(defendingPlayer)<<" has lost all fingers and has been eliminated!\n";
+        playersOut += 1;
+        if (playersOut == numberOfPlayers - 1)
+        {
+            cout<<"Player "<<playerNum + 1<<" has won! Congragulations!\n";
+            return -1;
+        }
+        cout<<"Press anything to continue ";
+        string T;
+        cin>>T;
     }
     return 0;
 }
@@ -104,6 +135,21 @@ void Lines(int num)
 void inscrutions()
 {
     system("clear");
+    cout<<BCYAN<<"━ ━ ━ ━ ━ ━ ━ ━ ━ ━ \n";
+    cout<<"    "<<BWHITE<<"Instructions"<<BCYAN<<"    \n";
+    cout<<BCYAN<<"━ ━ ━ ━ ━ ━ ━ ━ ━ ━ \n";
+    cout<<BWHITE;
+    cout<<"select the option you want from the menu with the corresponding number (you can use n and p to move the curser in the list and o to open it)";
+    cout<<"\nYou can change the game settings from the menu";
+    cout<<"\nWhen you are ready start the game from the menu";
+    cout<<"\nDecide yourself who is what number player";
+    cout<<"\nWhen the text says it is their turn they may make their move";
+    cout<<"\nto make a move in 2 players specify the attacking hand and the attacked hand as 2 space seperated numbers (ex: 1 2)";
+    cout<<"\nto make a move in 3 players specify the attacking hand, the attacked player, and the attacked hand as 3 space seperated numbers (ex: 1 2 3)";
+    cout<<"\nEnjoy!";
+    cout<<"\nEnter any input to leave this menu\n";
+    string T;
+    cin>>T;
 }
 
 void Menu()
@@ -125,13 +171,16 @@ void Menu()
         cout<<"2. Number of Players: "<<numberOfPlayers<<"\n";
         
         cout<<(curser == 3 ? "-> " : "   ");
-        cout<<"3. Starting Fingers: "<<"\n";
+        cout<<"3. Starting Fingers: "<<startingFingers<<"\n";
         
         cout<<(curser == 4 ? "-> " : "   ");
-        cout<<"4. Number of Hands: "<<"\n";
+        cout<<"4. Number of Hands: "<<numberOfHands<<"\n";
         
         cout<<(curser == 5 ? "-> " : "   ");
-        cout<<"5. Fingers on each hand: "<<"\n";
+        cout<<"5. Fingers on each hand: "<<fingersOnHand<<"\n";
+        
+        cout<<(curser == 6 ? "-> " : "   ");
+        cout<<"6. Start game"<<"\n";
         
         cin>>input;
         if (input == "1")
@@ -144,10 +193,40 @@ void Menu()
             curser = 4;
         else if (input == "5")
             curser = 5;
+        else if (input == "6")
+            curser = 6;
         else if (input == "n" || input == "d" || input == "s")
-            curser = curser + 1 == 6 ? 1 : curser + 1;
+            curser = curser + 1 == 7 ? 1 : curser + 1;
         else if (input == "p" || input == "u" || input == "w")
-            curser = curser - 1 == 0 ? 5 : curser - 1;
+            curser = curser - 1 == 0 ? 6 : curser - 1;
+        if (input == "o" || input == "1" || input == "2" || input == "3" || input == "4" || input == "5" || input == "6")
+        {
+            if (curser == 1)
+                inscrutions();
+            else if (curser == 2)
+            {
+                cout<<BCYAN<<"Enter the number of players: ";
+                cin>>numberOfPlayers;
+            }
+            else if (curser == 3)
+            {
+                cout<<BCYAN<<"Enter the number of fingers players will start with: ";
+                cin>>startingFingers;
+            }
+            else if (curser == 4)
+            {
+                cout<<BCYAN<<"Enter the number of hands each player will have: ";
+                cin>>numberOfHands;
+            }
+            else if (curser == 5)
+            {
+                cout<<BCYAN<<"Enter the number fingers on each hand: ";
+                cin>>fingersOnHand;
+            }
+            else if (curser == 6)
+                return;
+        }
+            
     }
 }
 
@@ -156,10 +235,21 @@ int main()
     Menu();
     vector<PlayerStruct> newPlayerList(numberOfPlayers);
     players = newPlayerList;
+    for (int j = 0; j < numberOfPlayers; j++)
+    for (int i = 0; i < numberOfHands; i++)
+    {
+        players[j].hands.push_back(startingFingers);
+        //cout<<i<<" "<<players[i].hands;
+    }
+    //int T;
+    //cin>>T;
     while (true)
     {
-        if (playPlayer(0) == -1) {return 0;}
-        if (playPlayer(1) == -1) {return 0;}
+        for (int i = 0; i < numberOfPlayers; i++)
+        {
+            if (HasAliveHand(i) == true) {
+                if (playPlayer(i) == -1) {return 0;} }
+        }
     }
 
     return 0;
