@@ -17,7 +17,7 @@ string BWHITE = "\033[97m";
 string BOLD = "\033[1m";
 string NORMAL = "\033[0m";
 
-//Control Variables
+//setings Variables
 int numberOfPlayers = 2;
 int startingFingers = 1;
 int fingersOnHand = 5;
@@ -28,6 +28,8 @@ struct PlayerStruct {
     vector<int> hands;
 };
 
+//Number of players eleminated
+//Used to tell if a player has won
 int playersOut = 0;
 
 //Holds the players
@@ -50,8 +52,10 @@ void attackPlayer(int attackPlayer, int attackHand, int defendPlayer, int defend
     players[defendPlayer].hands[defendHand] = newValue;
 }
 
+//Returns if a player has any hands left alive
 bool HasAliveHand(int playerNum)
 {
+    //If any had is found alive return true
     for (int i = 0; i < numberOfHands; i++)
     {
         if (getHandValue(playerNum, i) != 0)
@@ -65,57 +69,75 @@ bool HasAliveHand(int playerNum)
 //Player num 0 - 1
 //Hand num 0 - 1 
 
+//Basic logic for a single persons turn
 int playPlayer(int playerNum)
 {
+    //Write the header text
     system("clear");
     cout<<BCYAN<<"╔══════════════╗\n";
     cout<<"║   "<<BWHITE<<"Player "<<playerNum+1<<BCYAN<<"   ║\n";
     cout<<BCYAN<<"╚══════════════╝\n";
     cout<<"\n";
+    
+    //Print out the data for each playing player
     for (int i = 0; i < numberOfPlayers; i++)
     {
         string currentColor;
         if (i == playerNum)
         {
+            //Different header hand text if it is your hand
             currentColor = BGREEN;
             cout<<BOLD<<currentColor<<"Your hand (p"<<i+1<<"): ◀─────\n";
         }
         else
         {
+            //Tells the player what player each hand corasponds too
             currentColor = BRED;
             cout<<BOLD<<currentColor<<"Player "<<i+1<<"'s hand: \n";
         }
-        cout<<currentColor<<"Hand 1: "<<BWHITE<<getHandValue(i, 0)<<"\n";
-        cout<<currentColor<<"Hand 2: "<<BWHITE<<getHandValue(i, 1)<<"\n";
+        
+        //Prints the hand data
+        for (int j = 0; j < numberOfHands; j++)
+        {
+            cout<<currentColor<<"Hand "<<j + 1<<": "<<BWHITE<<getHandValue(i, j)<<"\n";
+        }
         cout<<"\n";
     }
     
+    //Continues attacking untill valage data inputed
     int attackHand, defendingHand, defendingPlayer;
     while (true)
     {
         cout<<BWHITE<<"How will you attack: ";
+        
+        //Skip defending player if only 2 players
         if (numberOfPlayers != 2)
             cin>>attackHand>>defendingPlayer>>defendingHand;
         else
         {
             cin>>attackHand>>defendingHand;
-            defendingPlayer = playerNum == 0 ? 1 : 0;
+            defendingPlayer = playerNum == 0 ? 2 : 1;
         }
         
+        //Input validation
         if (getHandValue(defendingPlayer - 1, defendingHand - 1) == 0 || getHandValue(playerNum, attackHand - 1) == 0 || defendingPlayer > numberOfPlayers)
             cout<<BRED<<"That is not a valade combination! Please try again\n"<<BWHITE;
         else
             break;
     }
-
+    
+    //Attacks the player
     attackPlayer(playerNum, attackHand - 1, defendingPlayer - 1, defendingHand - 1);
-    if (getHandValue(defendingPlayer - 1, 0) == 0 && getHandValue(defendingPlayer - 1, 1) == 0)
+    
+    //If a player is dead then display that
+    if (HasAliveHand(defendingPlayer - 1) == false)
     {
         system("clear");
         cout<<BGREEN<<BOLD<<"Player "<<(defendingPlayer)<<" has lost all fingers and has been eliminated!\n";
         playersOut += 1;
         if (playersOut == numberOfPlayers - 1)
         {
+            //if a player has won display that
             cout<<"Player "<<playerNum + 1<<" has won! Congragulations!\n";
             return -1;
         }
@@ -126,12 +148,7 @@ int playPlayer(int playerNum)
     return 0;
 }
 
-void Lines(int num)
-{
-    for (int i = 0; i < num; i++)
-        cout<<"═";
-}
-
+//Prints out the instructions from the menu
 void inscrutions()
 {
     system("clear");
@@ -152,22 +169,27 @@ void inscrutions()
     cin>>T;
 }
 
+//Starting menu
 void Menu()
 {
     int curser = 1;
     string input;
+    
+    //repeats until starting game
     while (true)
     {
+        //Header text
         system("clear");
         cout<<BCYAN<<"━ ━ ━ ━ ━ ━ ━ ━ ━ \n";
         cout<<"    "<<BWHITE<<"Chopsticks"<<BCYAN<<"    \n";
         cout<<BCYAN<<"━ ━ ━ ━ ━ ━ ━ ━ ━ \n";
         cout<<"\n"<<BWHITE;
         
+        //Out put each option
         cout<<(curser == 1 ? "-> " : "   ");
-        cout<<"1. Instructions\n";
+        cout<<"1. Instructions\n"; 
         
-        cout<<(curser == 2 ? "-> " : "   ");
+        cout<<(curser == 2 ? "-> " : "   "); //If the curser is on a option display the arrow before it
         cout<<"2. Number of Players: "<<numberOfPlayers<<"\n";
         
         cout<<(curser == 3 ? "-> " : "   ");
@@ -182,6 +204,7 @@ void Menu()
         cout<<(curser == 6 ? "-> " : "   ");
         cout<<"6. Start game"<<"\n";
         
+        //Handles number inputs
         cin>>input;
         if (input == "1")
             curser = 1;
@@ -195,11 +218,11 @@ void Menu()
             curser = 5;
         else if (input == "6")
             curser = 6;
-        else if (input == "n" || input == "d" || input == "s")
+        else if (input == "n" || input == "d" || input == "s") //Handles letter inputs for moving curser up and down
             curser = curser + 1 == 7 ? 1 : curser + 1;
         else if (input == "p" || input == "u" || input == "w")
             curser = curser - 1 == 0 ? 6 : curser - 1;
-        if (input == "o" || input == "1" || input == "2" || input == "3" || input == "4" || input == "5" || input == "6")
+        if (input == "o" || input == "1" || input == "2" || input == "3" || input == "4" || input == "5" || input == "6") //Dose the effect of a number if a number or o is pressed
         {
             if (curser == 1)
                 inscrutions();
@@ -233,8 +256,12 @@ void Menu()
 int main()
 {
     Menu();
+    
+    //Create the vector of players with the right amount of people
     vector<PlayerStruct> newPlayerList(numberOfPlayers);
     players = newPlayerList;
+    
+    //Add the hands to each player
     for (int j = 0; j < numberOfPlayers; j++)
     for (int i = 0; i < numberOfHands; i++)
     {
@@ -243,10 +270,13 @@ int main()
     }
     //int T;
     //cin>>T;
+    
+    //Keeps the game running
     while (true)
     {
         for (int i = 0; i < numberOfPlayers; i++)
         {
+            //Skips eleminated players turns
             if (HasAliveHand(i) == true) {
                 if (playPlayer(i) == -1) {return 0;} }
         }
